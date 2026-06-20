@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Juega Siempre | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { background: #0b1020; }
+      .hero { background: linear-gradient(135deg, #5b21b6, #2563eb); }
+      .metric-card, .panel { background: #151c31; border: 1px solid #27324d; }
+      .metric-value { color: #a5b4fc; }
+      .table-dark { --bs-table-bg: #151c31; --bs-table-border-color: #27324d; }
+      .badge-stock { background: #143d32; color: #6ee7b7; }
+    </style>
+  </head>
+  <body class="text-light">
+    <nav class="navbar navbar-dark border-bottom border-secondary-subtle">
+      <div class="container py-2">
+        <a class="navbar-brand fw-bold" href="/">🎮 Juega Siempre</a>
+        <a class="btn btn-outline-light btn-sm" href="{% url 'admin:index' %}">Administración</a>
+      </div>
+    </nav>
+
+    <main class="container py-4 py-lg-5">
+      <section class="hero p-4 p-lg-5 rounded-4 shadow-lg mb-4">
+        <p class="text-uppercase small fw-semibold mb-2">Panel de operaciones</p>
+        <h1 class="display-6 fw-bold">Datos reales de la tienda</h1>
+        <p class="lead mb-0">Inventario, catálogo y ventas cargados desde PostgreSQL.</p>
+      </section>
+
+      <section class="row g-3 mb-4">
+        <div class="col-6 col-lg">
+          <article class="metric-card rounded-4 p-3 h-100">
+            <div class="text-secondary small">Categorías</div>
+            <div class="metric-value fs-2 fw-bold">{{ resumen.categorias }}</div>
+          </article>
+        </div>
+        <div class="col-6 col-lg">
+          <article class="metric-card rounded-4 p-3 h-100">
+            <div class="text-secondary small">Productos</div>
+            <div class="metric-value fs-2 fw-bold">{{ resumen.productos }}</div>
+          </article>
+        </div>
+        <div class="col-6 col-lg">
+          <article class="metric-card rounded-4 p-3 h-100">
+            <div class="text-secondary small">Unidades en stock</div>
+            <div class="metric-value fs-2 fw-bold">{{ resumen.unidades_inventario }}</div>
+          </article>
+        </div>
+        <div class="col-6 col-lg">
+          <article class="metric-card rounded-4 p-3 h-100">
+            <div class="text-secondary small">Ventas</div>
+            <div class="metric-value fs-2 fw-bold">{{ resumen.ventas }}</div>
+          </article>
+        </div>
+        <div class="col-12 col-lg">
+          <article class="metric-card rounded-4 p-3 h-100">
+            <div class="text-secondary small">Ingresos acumulados</div>
+            <div class="metric-value fs-4 fw-bold">$ {{ resumen.ingresos|floatformat:0 }}</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="row g-4 mb-4">
+        <div class="col-lg-8">
+          <div class="panel rounded-4 p-3 p-lg-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="h5 mb-0">Productos con mayor stock</h2>
+              <span class="text-secondary small">Top {{ productos|length }}</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark table-hover align-middle mb-0">
+                <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Rating</th></tr></thead>
+                <tbody>
+                  {% for producto in productos %}
+                    <tr>
+                      <td class="fw-semibold">{{ producto.titulo }}</td>
+                      <td>{{ producto.categoria.nombre }}</td>
+                      <td>$ {{ producto.precio_base|floatformat:0 }}</td>
+                      <td><span class="badge badge-stock">{{ producto.stock_total }}</span></td>
+                      <td>{{ producto.calificacion_metacritic|default:"—" }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="5" class="text-center text-secondary py-4">No hay productos cargados.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="panel rounded-4 p-3 p-lg-4 h-100">
+            <h2 class="h5 mb-3">Inventario por sucursal</h2>
+            {% for sucursal in inventario_sucursales %}
+              <div class="border-bottom border-secondary-subtle py-3">
+                <div class="fw-semibold">{{ sucursal.sucursal }}</div>
+                <div class="text-secondary small">{{ sucursal.productos }} productos · {{ sucursal.unidades }} unidades</div>
+              </div>
+            {% empty %}
+              <p class="text-secondary">No hay inventario cargado.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="row g-4">
+        <div class="col-lg-8">
+          <div class="panel rounded-4 p-3 p-lg-4">
+            <h2 class="h5 mb-3">Últimas ventas</h2>
+            <div class="table-responsive">
+              <table class="table table-dark table-hover align-middle mb-0">
+                <thead><tr><th>ID</th><th>Fecha</th><th>Pago</th><th>Productos</th><th>Unidades</th><th>Total</th></tr></thead>
+                <tbody>
+                  {% for venta in ventas_recientes %}
+                    <tr>
+                      <td>#{{ venta.id }}</td>
+                      <td>{{ venta.fecha_transaccion|date:"d/m/Y H:i" }}</td>
+                      <td>{{ venta.metodo_pago }}</td>
+                      <td>{{ venta.cantidad_detalles }}</td>
+                      <td>{{ venta.unidades }}</td>
+                      <td class="fw-semibold">$ {{ venta.total|floatformat:0 }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="6" class="text-center text-secondary py-4">No hay ventas cargadas.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="panel rounded-4 p-3 p-lg-4">
+            <h2 class="h5 mb-3">Catálogo por categoría</h2>
+            {% for categoria in categorias %}
+              <div class="d-flex justify-content-between border-bottom border-secondary-subtle py-2">
+                <span>{{ categoria.nombre }}</span>
+                <span class="badge text-bg-primary">{{ categoria.cantidad_productos }}</span>
+              </div>
+            {% empty %}
+              <p class="text-secondary">No hay categorías cargadas.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
